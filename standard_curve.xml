@@ -1,0 +1,66 @@
+<tool id="standard_curve_calculator" name="Standard Curve Calculator" version="0.1.1">
+  <description>Calculate linear regression from standard curve data</description>
+  <command interpreter="python">standard_curve.py '$input' '$output' '$has_header'</command>
+  <inputs>
+    <param format="tabular" name="input" type="data" label="Input data file" help="A tab-delimited file with concentration values in first column and measurement values in second column"/>
+    <param name="has_header" type="boolean" checked="false" label="Input file has header?" help="Check this box if your input file has a header line that should be skipped during calculation" truevalue="yes" falsevalue="no"/>
+  </inputs>
+  <outputs>
+    <data format="tabular" name="output" label="Standard Curve Results"/>
+  </outputs>
+
+  <tests>
+    <test>
+      <param name="input" value="standard_curve_input.txt"/>
+      <param name="has_header" value="no"/>
+      <output name="output" file="standard_curve_output.txt"/>
+    </test>
+    <test>
+      <param name="input" value="standard_curve_input_with_header.txt"/>
+      <param name="has_header" value="yes"/>
+      <output name="output" file="standard_curve_output_with_header.txt"/>
+    </test>
+  </tests>
+
+  <help><![CDATA[
+**What it does**
+
+This tool calculates a standard curve by performing linear regression on a set of concentration-measurement pairs.
+
+**Input format**
+
+The input should be a tab-delimited file with:
+- First column: concentration values (x)
+- Second column: measurement values (y)
+
+Example input without header::
+
+  0.0    0.001
+  0.5    0.245
+  1.0    0.508
+  2.0    0.999
+  4.0    2.032
+
+Example input with header::
+
+  Concentration    Absorbance
+  0.0    0.001
+  0.5    0.245
+  1.0    0.508
+  2.0    0.999
+  4.0    2.032
+
+**Parameters**
+
+- **Input data file**: Tab-delimited file with concentration and measurement values
+- **Input file has header?**: Check this box if your input file has a header line that should be skipped during calculation
+
+**Output**
+
+The tool produces a tab-delimited file containing:
+- The linear regression formula (y = mx + b)
+- R-squared value, p-value, and standard error
+- A table of original data points with predicted values and residuals
+- Additional points for plotting a smooth curve
+  ]]></help>
+</tool>

@@ -1,0 +1,46 @@
+<tool id="rna_to_dna_converter" name="RNA to DNA Converter" version="1.0.0">
+    <description>Convert RNA sequences to DNA (U→T) with optional case conversion</description>
+    <command interpreter="perl">
+        rna_to_dna.pl $input $output $case_conversion
+    </command>
+    <inputs>
+        <param name="input" type="data" format="fasta" label="RNA FASTA file" help="Input FASTA file containing RNA sequences"/>
+        <param name="case_conversion" type="select" label="Case conversion" help="Optionally convert case of output">
+            <option value="0" selected="true">No case conversion</option>
+            <option value="1">Convert to UPPERCASE</option>
+            <option value="2">Convert to lowercase</option>
+        </param>
+    </inputs>
+    <outputs>
+        <data name="output" format="fasta" label="${tool.name} on ${on_string}: DNA"/>
+    </outputs>
+    <help>
+**What it does**
+
+This tool converts RNA sequences (with U nucleotides) to DNA sequences (replacing U with T).
+It also provides an option to convert the output to uppercase or lowercase.
+
+**Input**
+
+A FASTA file containing RNA sequences.
+
+**Output**
+
+A FASTA file containing the converted DNA sequences.
+
+**Example**
+
+RNA input::
+
+    >Example_Sequence
+    AUGCUUGUAACCGCUAAGGAU
+
+DNA output::
+
+    >Example_Sequence
+    ATGCTTGTAACCGCTAAGGAT
+
+    </help>
+    <citations>
+    </citations>
+</tool>

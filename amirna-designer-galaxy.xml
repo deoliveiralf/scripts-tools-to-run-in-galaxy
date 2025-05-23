@@ -1,0 +1,122 @@
+<tool id="amirna_designer" name="amiRNA Designer" version="1.0.0">
+    <description>Design artificial microRNAs (amiRNAs) for targeted gene silencing</description>
+    <requirements>
+    	<requirement type="package" version="1.85">biopython</requirement>
+    	<!-- Optional requirement, tool will use a simplified algorithm if not available -->
+    	<requirement type="package" version="2.5.0">viennarna</requirement>
+    </requirements>
+    <command detect_errors="exit_code"><![CDATA[
+        python '$__tool_directory__/amirna-designer-galaxy.py'
+            '$input_fasta'
+            '$output_amirnas'
+            '$num_candidates'
+            '$backbone_options.use_custom_backbone'
+            #if $backbone_options.use_custom_backbone == "true"
+                '$backbone_options.custom_backbone'
+                '$backbone_options.custom_amirna_5p'
+                '$backbone_options.custom_amirna_3p'
+            #else
+                'dummy_value'
+                'dummy_value'
+                'dummy_value'
+            #end if
+    ]]></command>
+    
+    <inputs>
+        <param name="input_fasta" type="data" format="fasta" label="Target Sequence" help="FASTA format file containing the target gene sequence(s)" />
+        <param name="num_candidates" type="integer" value="5" min="1" max="20" label="Number of amiRNA candidates" help="How many candidate amiRNAs to design for each target sequence" />
+        
+        <conditional name="backbone_options">
+            <param name="use_custom_backbone" type="boolean" checked="false" label="Use custom miRNA backbone" help="Use custom sequences instead of the default miR319a backbone" />
+            <when value="true">
+                <param name="custom_backbone" type="text" area="true" label="Custom miRNA backbone" help="Custom miRNA backbone sequence">
+                    <sanitizer>
+                        <valid initial="string.printable">
+                            <remove value="&apos;"/>
+                        </valid>
+                    </sanitizer>
+                </param>
+                <param name="custom_amirna_5p" type="text" label="Custom 5' flanking sequence" help="Sequence that will flank the 5' end of the amiRNA">
+                    <sanitizer>
+                        <valid initial="string.printable">
+                            <remove value="&apos;"/>
+                        </valid>
+                    </sanitizer>
+                </param>
+                <param name="custom_amirna_3p" type="text" label="Custom 3' flanking sequence" help="Sequence that will flank the 3' end of the amiRNA">
+                    <sanitizer>
+                        <valid initial="string.printable">
+                            <remove value="&apos;"/>
+                        </valid>
+                    </sanitizer>
+                </param>
+            </when>
+            <when value="false">
+                <!-- No additional parameters needed for default backbone -->
+            </when>
+        </conditional>
+    </inputs>
+    
+    <outputs>
+        <data name="output_amirnas" format="tabular" label="${tool.name} on ${on_string}" />
+    </outputs>
+    
+    <tests>
+        <test>
+            <param name="input_fasta" value="test_sequence.fa" />
+            <param name="num_candidates" value="3" />
+            <param name="backbone_options.use_custom_backbone" value="false" />
+            <output name="output_amirnas" file="expected_output.tabular" />
+        </test>
+    </tests>
+    
+    <help><![CDATA[
+.. class:: infomark
+
+**What it does**
+
+This tool designs artificial microRNAs (amiRNAs) for targeted gene silencing, similar to the functionality of WMD3 (http://wmd3.weigelworld.org/).
+
+The tool takes a target gene sequence as input and:
+
+1. Identifies potential amiRNA target sites based on empirical design rules
+2. Scores candidate sequences based on hybridization properties and other criteria
+3. Returns optimized amiRNA sequences ready for cloning
+
+-----
+
+**Inputs**
+
+* **Target Sequence** - A FASTA format file containing the gene sequence(s) to target
+* **Number of amiRNA candidates** - How many candidate amiRNAs to design for each target sequence
+* **Use custom miRNA backbone** - Option to use custom backbone and flanking sequences instead of the default miR319a
+
+-----
+
+**Outputs**
+
+The tool generates a tabular file with the following columns:
+
+* **Sequence_ID** - The ID of the input sequence
+* **Candidate** - The candidate number
+* **Target_Position** - The position of the target site in the input sequence
+* **Target_Sequence** - The 21-nt target site sequence
+* **amiRNA_Sequence** - The designed amiRNA sequence
+* **Binding_Energy** - The predicted binding energy between amiRNA and target
+* **GC_Content** - The GC content of the target site
+* **Cloning_Sequence** - The complete sequence for cloning in miRNA backbone
+
+-----
+
+**Notes**
+
+* ViennaRNA package is optional but recommended for more accurate binding energy prediction
+* If ViennaRNA is not available, a simplified scoring method will be used
+* The default backbone is based on Arabidopsis miR319a
+    ]]></help>
+    
+    <citations>
+        <citation type="doi">10.1038/nbt1203</citation>
+        <citation type="doi">10.1186/1471-2229-6-13</citation>
+    </citations>
+</tool>

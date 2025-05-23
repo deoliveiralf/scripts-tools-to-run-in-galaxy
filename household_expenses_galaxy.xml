@@ -1,0 +1,174 @@
+<tool id="household_expenses_calculator" name="Household Expenses Calculator" version="1.0.0">
+    <description>Calculate and track shared household expenses between two people</description>
+    <requirements>
+        <requirement type="package" version="3.7">python</requirement>
+    </requirements>
+    
+    <command detect_errors="exit_code"><![CDATA[
+        python '$__tool_directory__/household_expenses_galaxy.py'
+        
+        #if $input_expenses.source_selector == "from_history":
+            --input '$input_expenses.expenses_file'
+        #end if
+        
+        #for $expense in $expenses:
+            --add-expense
+            --description '$expense.description'
+            --amount $expense.amount
+            --payer '$expense.payer'
+            --expense-type $expense.expense_type
+            --process-immediately
+        #end for
+        
+        --output-csv '$output_expenses'
+        --output-summary '$output_summary'
+        --output-json '$output_json'
+        --hide-settlement-json
+    ]]></command>
+    
+    <inputs>
+        <!-- Input expenses file selection -->
+        <conditional name="input_expenses">
+            <param name="source_selector" type="select" label="Source of expenses">
+                <option value="none">No previous expense data (start new)</option>
+                <option value="from_history">Use existing expense file from history</option>
+            </param>
+            <when value="from_history">
+                <param name="expenses_file" type="data" format="csv" label="Expenses CSV file" help="CSV file with existing expenses" />
+            </when>
+            <when value="none" />
+        </conditional>
+        
+        <!-- Multiple expense entries -->
+        <repeat name="expenses" title="Add Expense">
+            <param name="description" type="text" label="Expense description" help="Short description of the expense" />
+            <param name="amount" type="float" value="0.00" label="Amount" help="Expense amount in dollars" />
+            <param name="payer" type="select" label="Who paid?">
+                <option value="Bruno">Bruno</option>
+                <option value="Leandro">Leandro</option>
+            </param>
+            <param name="expense_type" type="select" label="Expense type">
+                <option value="1">Shared by both (50/50 split)</option>
+                <option value="2">For the other person</option>
+                <option value="3">Personal expense</option>
+            </param>
+        </repeat>
+    </inputs>
+    
+    <outputs>
+        <data name="output_expenses" format="csv" label="${tool.name} on ${on_string}: Expenses CSV" />
+        <data name="output_summary" format="txt" label="${tool.name} on ${on_string}: Summary" />
+        <data name="output_json" format="json" label="${tool.name} on ${on_string}: Settlement JSON" hidden="true" />
+    </outputs>
+    
+    <tests>
+        <test>
+            <conditional name="input_expenses">
+                <param name="source_selector" value="none" />
+            </conditional>
+            <repeat name="expenses">
+                <param name="description" value="Groceries" />
+                <param name="amount" value="50.00" />
+                <param name="payer" value="Bruno" />
+                <param name="expense_type" value="1" />
+            </repeat>
+            <output name="output_summary" file="expected_empty_plus_one.txt" compare="contains" />
+        </test>
+        <test>
+            <conditional name="input_expenses">
+                <param name="source_selector" value="from_history" />
+                <param name="expenses_file" value="input_expenses.csv" />
+            </conditional>
+            <repeat name="expenses">
+                <param name="description" value="Dinner" />
+                <param name="amount" value="75.00" />
+                <param name="payer" value="Leandro" />
+                <param name="expense_type" value="1" />
+            </repeat>
+            <output name="output_json" file="expected_settlement.json" compare="sim_size" />
+        </test>
+        <test>
+            <conditional name="input_expenses">
+                <param name="source_selector" value="none" />
+            </conditional>
+            <repeat name="expenses">
+                <param name="description" value="Groceries" />
+                <param name="amount" value="50.00" />
+                <param name="payer" value="Bruno" />
+                <param name="expense_type" value="1" />
+            </repeat>
+            <repeat name="expenses">
+                <param name="description" value="Dinner" />
+                <param name="amount" value="75.00" />
+                <param name="payer" value="Leandro" />
+                <param name="expense_type" value="1" />
+            </repeat>
+            <output name="output_summary" file="expected_two_expenses.txt" compare="contains" />
+        </test>
+    </tests>
+    
+    <help><![CDATA[
+**What it does**
+
+This tool helps track and calculate shared household expenses between two people (Bruno and Leandro). It can:
+
+- Load existing expenses from a CSV file in your history
+- Create a new expense record from scratch
+- Add multiple new expenses at once
+- Calculate who owes whom how much
+- Save the updated expenses list and settlement calculation
+
+**Input Options**
+
+You have two ways to provide expense data:
+
+1. **Start new**: Create a new expense record from scratch
+2. **Use existing file from history**: Select a CSV expense file from your Galaxy history
+
+**Adding expenses**
+
+Click the "Add Expense" button to add a new expense entry. You can add multiple expenses at once.
+For each expense, you need to specify:
+- Description: A short description of the expense
+- Amount: How much it cost
+- Payer: Who paid (Bruno or Leandro)
+- Expense type:
+  1. Shared by both (50/50 split)
+  2. For the other person
+  3. Personal expense (just for tracking)
+
+**Outputs**
+
+The tool generates three outputs:
+1. Expenses CSV: An updated CSV file with all expenses
+2. Summary: A text file with the expense list and settlement calculation
+3. Settlement JSON: A JSON file with structured settlement data that can be used by other tools (not shown in history)
+
+**How expenses are calculated**
+
+- For shared expenses: The cost is split 50/50
+- For expenses paid for the other person: The full amount is owed
+- For personal expenses: These are tracked but don't affect what is owed
+- The final settlement shows the net amount one person owes the other
+
+**Example**
+
+If Bruno paid $100 for groceries (shared) and Leandro paid $30 for Bruno's medication, the calculation would be:
+- Bruno paid: $100
+- Leandro paid: $30
+- Bruno owes Leandro: $30 (medication)
+- Leandro owes Bruno: $50 (half of groceries)
+- Final settlement: Leandro owes Bruno $20 ($50 - $30)
+    ]]></help>
+    
+    <citations>
+        <citation type="bibtex">
+            @misc{HouseholdExpensesCalculator,
+                author = {Leandro F. de Oliveira},
+                title = {Household Expenses Calculator},
+                year = {2025},
+                url = {https://github.com/deoliveiralf}
+            }
+        </citation>
+    </citations>
+</tool>

@@ -1,0 +1,158 @@
+<?xml version="1.0"?>
+<tool id="sequence_comparison" name="Sequence Alignment Comparison" version="1.6.0">
+    <description>Compare sequence lengths and calculate alignment percentage</description>
+    
+    <requirements>
+        <requirement type="package" version="3.8">python</requirement>
+    </requirements>
+    
+    <command detect_errors="exit_code"><![CDATA[
+        python '$__tool_directory__/sequence_comparison.py'
+        '$input1'
+        '$input2'
+        '$output'
+        --col1_id_total '$columns.col1_id_total'
+        --col1_length_total '$columns.col1_length_total'
+        --col2_id_aligned '$columns.col2_id_aligned'
+        --col2_length_aligned '$columns.col2_length_aligned'
+        #if $columns.header1
+        --header1
+        #end if
+        #if $columns.header2
+        --header2
+        #end if
+        #if $output_options.additional_column_index
+        --additional_column_index '$output_options.additional_column_index'
+        #end if
+        #if $output_options.only_full_alignment
+        --only_full_alignment
+        #end if
+    ]]></command>
+    
+    <inputs>
+        <param name="input1" type="data" format="tabular" 
+               label="Total Sequences File" 
+               help="Input file with sequence IDs and total nucleotide lengths (tab-separated)"/>
+        
+        <param name="input2" type="data" format="tabular" 
+               label="Aligned Sequences File" 
+               help="Input file with sequence IDs and additional information (tab-separated)"/>
+        
+        <section name="columns" title="Column and Header Selection" expanded="false">
+            <param name="col1_id_total" type="integer" value="0" min="0"
+                   label="Column for Sequence ID (Total Sequences)" 
+                   help="0-based index of the column containing sequence IDs in the first file"/>
+            
+            <param name="col1_length_total" type="integer" value="1" min="0"
+                   label="Column for Total Nucleotide Length" 
+                   help="0-based index of the column containing total nucleotide lengths in the first file"/>
+            
+            <param name="col2_id_aligned" type="integer" value="0" min="0"
+                   label="Column for Sequence ID (Aligned Sequences)" 
+                   help="0-based index of the column containing sequence IDs in the second file"/>
+            
+            <param name="col2_length_aligned" type="integer" value="1" min="0"
+                   label="Column for Aligned Nucleotide Length" 
+                   help="0-based index of the column containing aligned nucleotide lengths in the second file"/>
+            
+            <param name="header1" type="boolean" truevalue="true" falsevalue="false" value="false"
+                   label="First File Has Header"
+                   help="Check if the first file contains a header line"/>
+            
+            <param name="header2" type="boolean" truevalue="true" falsevalue="false" value="false"
+                   label="Second File Has Header"
+                   help="Check if the second file contains a header line"/>
+        </section>
+        
+        <section name="output_options" title="Output Options" expanded="false">
+            <param name="additional_column_index" type="integer" value="1" min="0"
+                   label="Additional Column Index"
+                   help="0-based index of the column to include in the output from the second input file"/>
+            
+            <param name="only_full_alignment" type="boolean" truevalue="true" falsevalue="false" value="false"
+                   label="Only 100% Aligned Sequences"
+                   help="Output only sequences with 100% alignment"/>
+        </section>
+    </inputs>
+    
+    <outputs>
+        <data name="output" format="tabular" 
+               label="Sequence Alignment Comparison" 
+               help="Comparison of sequence lengths with alignment percentages"/>
+    </outputs>
+    
+    <tests>
+        <test>
+            <param name="input1" value="test_total_sequences.tabular"/>
+            <param name="input2" value="test_aligned_sequences.tabular"/>
+            <param name="columns.col1_id_total">0</param>
+            <param name="columns.col1_length_total">1</param>
+            <param name="columns.col2_id_aligned">0</param>
+            <param name="columns.col2_length_aligned">1</param>
+            <param name="columns.header1">false</param>
+            <param name="columns.header2">false</param>
+            <param name="output_options.additional_column_index">1</param>
+            <output name="output" file="expected_output.tabular"/>
+        </test>
+        <test>
+            <param name="input1" value="test_total_sequences.tabular"/>
+            <param name="input2" value="test_aligned_sequences.tabular"/>
+            <param name="columns.col1_id_total">0</param>
+            <param name="columns.col1_length_total">1</param>
+            <param name="columns.col2_id_aligned">0</param>
+            <param name="columns.col2_length_aligned">1</param>
+            <param name="columns.header1">false</param>
+            <param name="columns.header2">false</param>
+            <param name="output_options.additional_column_index">1</param>
+            <param name="output_options.only_full_alignment">true</param>
+            <output name="output" file="expected_full_alignment_output.tabular"/>
+        </test>
+    </tests>
+    
+    <help><![CDATA[
+**What this tool does**
+
+This tool compares two input files containing sequence information:
+- First input file: Sequence IDs and total nucleotide lengths
+- Second input file: Sequence IDs and additional information
+
+**Column and Output Options**
+You can specify:
+- Which columns to use for Sequence ID and Nucleotide Length
+- Whether each file contains a header line
+- Which column to include from the second input file
+- Option to output only 100% aligned sequences
+
+**Output Details**
+- For each sequence ID in the first input file, the tool will:
+  1. Find all matching IDs in the second input file
+  2. Repeat the total nucleotide length for each match
+  3. Calculate alignment percentage based on each match's length
+  4. Include the specified additional column from the second input file
+
+**New Feature: 100% Alignment Filter**
+- When "Only 100% Aligned Sequences" is checked, the output will only include
+  sequences that are completely aligned (100% alignment percentage)
+
+**Example**
+Input Total Sequences:
+Chr01_505    21
+
+Input Aligned Sequences:
+Chr01_505    sbi-miR397-3p    21
+Chr01_505    zma-miR397b-3p  15
+
+Output (with 100% alignment filter):
+ID          Total_Nucleotides  Aligned_Nucleotides  Alignment_Percentage  Additional_Column
+Chr01_505   21                 21                   100.00                sbi-miR397-3p
+    ]]></help>
+    
+    <citations>
+        <citation type="bibtex">
+@misc{sequenceComparisonTool,
+    title = {Sequence Alignment Comparison Tool},
+    year = {2024}
+}
+        </citation>
+    </citations>
+</tool>

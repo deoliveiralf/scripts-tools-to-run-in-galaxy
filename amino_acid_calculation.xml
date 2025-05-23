@@ -1,0 +1,311 @@
+<?xml version="1.0"?>
+<tool id="amino_acid_calculation" name="Amino Acid Concentration" version="4.1.0">
+    <description>Calculate amino acid concentrations in µg/g FW and nmol/g FW with sample grouping and statistics</description>
+    <requirements>
+        <requirement type="package" version="1.25.0">numpy</requirement>
+    </requirements>
+    <command detect_errors="aggressive"><![CDATA[
+        python '$__tool_directory__/amino_acid_calculation.py'
+        
+        #if $mol_weight_source.mol_weight_option == "custom":
+            --mol_weight '$mol_weight_source.custom_mol_weight'
+        #else:
+            --preset_mol_weight
+        #end if
+        
+        #if $standard_curve_source:
+            --standard_curve '$standard_curve_source'
+        #end if
+        
+        --peak_areas '$peak_areas_source'
+        --initial_fw $initial_fw
+        --volume $volume
+        --output_ug '$output_ug_file'
+        --output_nmol '$output_nmol_file'
+        
+        #if $amino_acid_selection.aa_option == "specific":
+            --amino_acid '$amino_acid_selection.specific_aa'
+        #end if
+        
+        #if $grouping.enable_grouping == "yes":
+            --group_mapping '$grouping.group_mapping'
+            #if $grouping.output_format.format_option == "both":
+                --group_output_ug '$group_statistics_ug'
+                --group_output_nmol '$group_statistics_nmol'
+            #elif $grouping.output_format.format_option == "ug":
+                --group_output_ug '$group_statistics_ug'
+            #elif $grouping.output_format.format_option == "nmol":
+                --group_output_nmol '$group_statistics_nmol'
+            #end if
+        #end if
+    ]]></command>
+    
+    <inputs>
+        <!-- Molecular Weight Source Selection -->
+        <conditional name="mol_weight_source">
+            <param name="mol_weight_option" type="select" label="Molecular Weight Source">
+                <option value="preset" selected="true">Use Preset Molecular Weights</option>
+                <option value="custom">Use Custom Molecular Weights</option>
+            </param>
+            <when value="preset">
+                <!-- No additional parameters needed when using preset values -->
+            </when>
+            <when value="custom">
+                <param name="custom_mol_weight" type="data" format="csv,tabular,txt" label="Custom Molecular Weight File"
+                       help="CSV or Tab-separated file with amino acid names in first column and molecular weights in second column"/>
+            </when>
+        </conditional>
+        
+        <param name="standard_curve_source" type="data" format="csv,tabular,txt" label="Standard Curve Source" optional="true" 
+               help="CSV or Tab-separated file for standard curve (optional)"/>
+        
+        <param name="peak_areas_source" type="data" format="csv,tabular,txt" label="Peak Areas Source" 
+               help="CSV or Tab-separated file containing peak areas for amino acids with first column containing sample names"/>
+        
+        <param name="initial_fw" type="float" value="1.0" label="Initial Fresh Weight (g)" 
+               help="Initial fresh weight of the sample in grams"/>
+        
+        <param name="volume" type="float" value="10.0" label="Volume (ml)" 
+               help="Volume of the solution in milliliters"/>
+        
+        <!-- Amino Acid Selection -->
+        <conditional name="amino_acid_selection">
+            <param name="aa_option" type="select" label="Amino Acid Calculation Options">
+                <option value="all" selected="true">Calculate All Amino Acids</option>
+                <option value="specific">Calculate Specific Amino Acid</option>
+            </param>
+            <when value="all">
+                <!-- No additional parameters needed when calculating all amino acids -->
+            </when>
+            <when value="specific">
+                <param name="specific_aa" type="select" label="Select Specific Amino Acid">
+                    <option value="Aspartic Acid">Aspartic Acid</option>
+                    <option value="Glutamic Acid">Glutamic Acid</option>
+                    <option value="Asparagine">Asparagine</option>
+                    <option value="Serine">Serine</option>
+                    <option value="Glutamine">Glutamine</option>
+                    <option value="Histidine">Histidine</option>
+                    <option value="Glycine">Glycine</option>
+                    <option value="Arginine">Arginine</option>
+                    <option value="Citruline">Citruline</option>
+                    <option value="Threonine">Threonine</option>
+                    <option value="Alanine">Alanine</option>
+                    <option value="GABA">GABA</option>
+                    <option value="Tyrosine">Tyrosine</option>
+                    <option value="Tryptophan">Tryptophan</option>
+                    <option value="Methionine">Methionine</option>
+                    <option value="Valine">Valine</option>
+                    <option value="Phenylalanine">Phenylalanine</option>
+                    <option value="Isoleucine">Isoleucine</option>
+                    <option value="Leucine">Leucine</option>
+                    <option value="Ornithine">Ornithine</option>
+                    <option value="Lysine">Lysine</option>
+                </param>
+            </when>
+        </conditional>
+        
+        <!-- Sample Grouping -->
+        <conditional name="grouping">
+            <param name="enable_grouping" type="select" label="Enable Sample Grouping">
+                <option value="no" selected="true">No</option>
+                <option value="yes">Yes</option>
+            </param>
+            <when value="no">
+                <!-- No additional parameters needed when grouping is disabled -->
+            </when>
+            <when value="yes">
+                <param name="group_mapping" type="data" format="csv,tabular,txt" label="Group Mapping File" 
+                       help="CSV or Tab-separated file mapping samples to groups (format: sample_name,group_name)"/>
+                <conditional name="output_format">
+                    <param name="format_option" type="select" label="Group Statistics Output Format">
+                        <option value="both" selected="true">Both µg/g FW and nmol/g FW</option>
+                        <option value="ug">µg/g FW only</option>
+                        <option value="nmol">nmol/g FW only</option>
+                    </param>
+                    <when value="both">
+                        <!-- Both formats selected - no additional parameters needed -->
+                    </when>
+                    <when value="ug">
+                        <!-- µg/g FW only - no additional parameters needed -->
+                    </when>
+                    <when value="nmol">
+                        <!-- nmol/g FW only - no additional parameters needed -->
+                    </when>
+                </conditional>
+            </when>
+        </conditional>
+    </inputs>
+    
+    <outputs>
+        <data name="output_ug_file" format="csv" label="${tool.name} on ${on_string}: µg/g FW Results"/>
+        <data name="output_nmol_file" format="csv" label="${tool.name} on ${on_string}: nmol/g FW Results"/>
+        
+        <data name="group_statistics_ug" format="csv" label="${tool.name} on ${on_string}: Group Statistics (µg/g FW)">
+            <filter>grouping['enable_grouping'] == 'yes' and (grouping['output_format']['format_option'] == 'both' or grouping['output_format']['format_option'] == 'ug')</filter>
+        </data>
+        <data name="group_statistics_nmol" format="csv" label="${tool.name} on ${on_string}: Group Statistics (nmol/g FW)">
+            <filter>grouping['enable_grouping'] == 'yes' and (grouping['output_format']['format_option'] == 'both' or grouping['output_format']['format_option'] == 'nmol')</filter>
+        </data>
+    </outputs>
+    
+    <tests>
+        <test>
+            <param name="mol_weight_option" value="preset"/>
+            <param name="peak_areas_source" value="test_peak_areas.csv"/>
+            <param name="initial_fw" value="2.5"/>
+            <param name="volume" value="10"/>
+            <param name="aa_option" value="all"/>
+            <param name="enable_grouping" value="no"/>
+            <output name="output_ug_file"/>
+            <output name="output_nmol_file"/>
+        </test>
+        <test>
+            <param name="mol_weight_option" value="preset"/>
+            <param name="peak_areas_source" value="test_peak_areas.csv"/>
+            <param name="initial_fw" value="2.5"/>
+            <param name="volume" value="10"/>
+            <param name="aa_option" value="all"/>
+            <param name="enable_grouping" value="yes"/>
+            <param name="group_mapping" value="test_group_mapping.csv"/>
+            <param name="format_option" value="both"/>
+            <output name="output_ug_file"/>
+            <output name="output_nmol_file"/>
+            <output name="group_statistics_ug"/>
+            <output name="group_statistics_nmol"/>
+        </test>
+        <test>
+            <param name="mol_weight_option" value="custom"/>
+            <param name="custom_mol_weight" value="test_molecular_weights.csv"/>
+            <param name="peak_areas_source" value="test_peak_areas.csv"/>
+            <param name="initial_fw" value="2.5"/>
+            <param name="volume" value="10"/>
+            <param name="aa_option" value="specific"/>
+            <param name="specific_aa" value="Aspartic Acid"/>
+            <param name="enable_grouping" value="no"/>
+            <output name="output_ug_file"/>
+            <output name="output_nmol_file"/>
+        </test>
+        <test>
+            <param name="mol_weight_option" value="preset"/>
+            <param name="peak_areas_source" value="test_peak_areas.csv"/>
+            <param name="initial_fw" value="2.5"/>
+            <param name="volume" value="10"/>
+            <param name="aa_option" value="all"/>
+            <param name="enable_grouping" value="yes"/>
+            <param name="group_mapping" value="test_group_mapping.csv"/>
+            <param name="format_option" value="ug"/>
+            <output name="output_ug_file"/>
+            <output name="output_nmol_file"/>
+            <output name="group_statistics_ug"/>
+        </test>
+    </tests>
+    
+    <help><![CDATA[
+.. class:: infomark
+
+**What it does**
+
+This tool calculates amino acid concentrations from peak area data in two measurement units (µg/g FW and nmol/g FW), with support for sample grouping by experimental conditions or treatments.
+
+**NEW IN VERSION 4.1.0**
+- Added dual output formats: µg/g FW and nmol/g FW
+- Enhanced group statistics with options for selecting output format
+- Improved calculations with replicate handling
+- Better statistical outputs (standard deviation, coefficient of variation)
+
+-----
+
+**Inputs**
+
+1. **Peak Areas File**: A CSV or TSV file containing peak areas for amino acids.
+   The file should have sample names in the first column and amino acid peak areas in the subsequent columns.
+   
+   Example format::
+   
+     Sample,Alanine,Glycine,Serine
+     sample1,1200,980,1500
+     sample2,1150,920,1480
+     sample3,1650,1120,1900
+
+2. **Molecular Weight Source**: Choose between preset molecular weights or custom weights from a file.
+
+3. **Standard Curve File** (optional): Custom standard curves for amino acids.
+
+4. **Initial Fresh Weight**: Sample fresh weight in grams.
+
+5. **Volume**: Extraction volume in milliliters.
+
+6. **Specific Amino Acid** (optional): Limit calculation to a specific amino acid.
+
+7. **Sample Grouping** (optional): Enable to analyze samples by experimental groups.
+   
+   The group mapping file should have this format::
+   
+     sample_name,group_name
+     sample1,control
+     sample2,control
+     sample3,treatment1
+     sample4,treatment1
+
+-----
+
+**Calculation Method**
+
+The tool performs the following calculation steps:
+1. Calculate nmol/ml using standard curve: (peak_area - intercept) / slope
+2. Convert to µg/ml: nmol/ml * molecular_weight / 1000
+3. Convert to µg/g FW: (µg/ml * volume) / initial_fresh_weight
+4. Calculate nmol/g FW: (nmol/ml * volume) / initial_fresh_weight
+5. Results reported in both µg/g FW and nmol/g FW
+
+Default Molecular Weights Included:
+Aspartic Acid (133.1), Glutamic Acid (147.1), Asparagine (132.1), Serine (105.1), 
+Glutamine (146.1), Histidine (191.7), Glycine (75.1), Arginine (210.7), Citruline (175.2), 
+Threonine (119.1), Alanine (89.1), GABA (103.1), Tyrosine (181.2), Tryptophan (204.2), 
+Methionine (149.2), Valine (117.2), Phenylalanine (165.2), Isoleucine (131.2), 
+Leucine (131.2), Ornithine (168.6), Lysine (182.7)
+
+-----
+
+**Outputs**
+
+1. **Amino Acid Results - µg/g FW**: Contains calculated concentrations in µg/g FW for all amino acids and samples.
+   Includes average values, standard deviations, and coefficient of variation.
+
+2. **Amino Acid Results - nmol/g FW**: Contains calculated concentrations in nmol/g FW for all amino acids and samples.
+   Includes average values, standard deviations, and coefficient of variation.
+
+3. **Group Statistics** (if grouping enabled): Contains statistics for each experimental group in selected units (µg/g FW, nmol/g FW, or both).
+   For each group, provides mean, standard deviation, coefficient of variation, and sample count.
+
+-----
+
+**Example Usage**
+
+Basic analysis::
+
+- Upload peak area data
+- Select "Use Preset Molecular Weights"
+- Enter your sample weight and extraction volume
+- Run the tool
+- Receive results in both µg/g FW and nmol/g FW formats
+
+Group analysis::
+
+- Same as basic analysis
+- Select "Yes" for Enable Sample Grouping
+- Upload a group mapping file that assigns each sample to a condition/treatment
+- Choose desired output format for group statistics (µg/g FW, nmol/g FW, or both)
+- Both individual results and group statistics will be generated
+    ]]></help>
+    
+    <citations>
+        <citation type="bibtex">
+@misc{amino_acid_calculation,
+    title = {Amino Acid Concentration Calculation Tool with Dual Unit Output},
+    author = {Leandro F. de Oliveira},
+    year = {2025}
+}
+        </citation>
+    </citations>
+</tool>

@@ -1,0 +1,100 @@
+<tool id="exact_search" name="Exact Search" version="0.1.0">
+    <description>Find exact matches of query sequences in a database with support for degenerate nucleotides</description>
+    <requirements>
+        <requirement type="package">python</requirement>
+        <requirement type="package">biopython</requirement>
+        <!-- Add any other dependencies here -->
+    </requirements>
+    <command detect_errors="exit_code"><![CDATA[
+        /dados/miniconda3/bin/python $__tool_directory__/exactSearch.py
+            --query '$query'
+            --database '$database'
+            #if $options.advanced == "yes":
+                --mismatch $options.mismatch
+                --gap $options.gap
+            #end if
+            #if $include_antisense == "yes":
+                --antisense
+            #end if
+            --output '$output'
+    ]]></command>
+    <inputs>
+        <param name="query" type="data" format="fasta" label="Query sequence file" help="FASTA format file containing query sequences. Query sequences can be degenerate sequences (e.g., cis-elements/motifs) using IUPAC nucleotide codes (R, Y, S, W, K, M, B, D, H, V, N)." />
+        <param name="database" type="data" format="fasta" label="Database file" help="FASTA format file containing sequences to search against. Commonly used for searching within promoter sequences of genes." />
+        <param name="include_antisense" type="select" label="Include antisense search" help="Search both the input sequences and their antisense (reverse complement) versions">
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+        </param>
+        <conditional name="options">
+            <param name="advanced" type="select" label="Advanced options">
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+            </param>
+            <when value="yes">
+                <param name="mismatch" type="integer" value="0" label="Number of mismatches allowed" help="Specify the maximum number of mismatches allowed in matches (default: 0)" />
+                <param name="gap" type="integer" value="0" label="Number of gaps allowed" help="Specify the maximum number of gaps allowed in matches (default: 0)" />
+            </when>
+            <when value="no" />
+        </conditional>
+    </inputs>
+    <outputs>
+        <data name="output" format="tabular" label="${tool.name} on ${on_string}: results" />
+    </outputs>
+    <help><![CDATA[
+**What it does**
+
+This tool searches for exact matches (or with specified mismatches/gaps) of query sequences in a database of sequences, with full support for IUPAC degenerate nucleotide codes.
+
+**Inputs**
+
+* **Query sequence file** in FASTA format:
+  - Can contain degenerate sequences such as cis-regulatory elements or motifs
+  - Supports all IUPAC nucleotide codes (A, C, G, T, R, Y, S, W, K, M, B, D, H, V, N)
+  - Commonly used for searching transcription factor binding sites or other regulatory motifs
+
+* **Database sequence file** in FASTA format:
+  - Typically contains promoter sequences from genes of interest
+  - Can be used with any set of DNA sequences (e.g., coding sequences, whole genomes)
+
+* **Include antisense search**:
+  - When set to "Yes", the tool will also search for matches on the antisense (reverse complement) strand
+  - This is especially useful for finding transcription factor binding sites that can function in both orientations
+
+* **Optional parameters**:
+  - **Mismatches**: Number of non-matching positions allowed in search results
+  - **Gaps**: Number of insertion/deletion events allowed in search results
+
+**Outputs**
+
+A tabular file containing the search results with the following columns:
+- Query sequence ID
+- Database sequence ID
+- Position (1-based) of the match in the database sequence
+- Number of mismatches
+- Number of gaps
+- Query sequence length
+- Matched sequence from the database
+- Strand (sense or antisense) - only shown when antisense search is enabled
+
+**Example Use Cases**
+
+1. Finding transcription factor binding sites in promoter regions
+2. Identifying conserved motifs across a set of sequences
+3. Mapping short sequence patterns in larger genomic contexts
+
+For more information, see the GitHub repository: https://github.com/cjgunase/exactSearch/
+    ]]></help>
+    <citations>
+        <citation type="bibtex">
+@article{gunasekara2016exactsearch,
+  title={ExactSearch: a web-based plant motif search tool},
+  author={Gunasekara, C and Subramanian, A and Avvari, JVRK and others},
+  journal={Plant Methods},
+  volume={12},
+  pages={26},
+  year={2016},
+  doi={10.1186/s13007-016-0126-6}
+}
+        </citation>
+    </citations>
+</tool>

@@ -1,0 +1,57 @@
+<tool id="dna_sequence_manipulator" name="DNA Sequence Manipulator" version="1.0.0">
+    <description>Reverse, complement, or reverse complement DNA sequences</description>
+    
+    <command><![CDATA[
+        python $__tool_directory__/dna_sequence_manipulator.py
+            --operation $operation
+            $input $output
+    ]]></command>
+    
+    <inputs>
+        <param name="input" type="data" format="fasta" label="Input FASTA file"/>
+        <param name="operation" type="select" label="Operation to perform">
+            <option value="reverse-complement" selected="true">Reverse Complement</option>
+            <option value="reverse">Reverse</option>
+            <option value="complement">Complement</option>
+        </param>
+    </inputs>
+    
+    <outputs>
+        <data name="output" format="fasta" label="${operation} of ${input.name}"/>
+    </outputs>
+    
+    <help><![CDATA[
+**What it does**
+
+This tool provides three operations for DNA sequence manipulation:
+
+* **Reverse Complement**: Generates the reverse complement of the input sequence
+* **Reverse**: Reverses the order of bases in the input sequence
+* **Complement**: Generates the complement of the input sequence
+
+-----
+
+**Examples**
+
+For the input sequence: ATGCTA
+
+* **Reverse Complement**: TAGCAT
+* **Reverse**: ATCGTA
+* **Complement**: TACGAT
+
+-----
+
+**Example Input (FASTA)**:
+
+    >Sample_Sequence_1
+    ATGCTAGCTAGCTACGATCG
+    ATCGATCGATCGATCGATCG
+
+**Example Output (Reverse Complement)**:
+
+    >Sample_Sequence_1 [Reverse Complement]
+    CGATCGATCGATCGATCGAT
+    CGATCGTAGCTAGCTAGCAT
+    ]]></help>
+    
+</tool>

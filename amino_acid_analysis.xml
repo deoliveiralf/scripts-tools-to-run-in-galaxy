@@ -1,0 +1,20 @@
+<tool id="amino_acid_analysis" name="Amino Acid Analysis" version="1.0.0">
+    <description>Calculate amino acid percentages and counts in protein sequences</description>
+    <command>perl $__tool_directory__/amino_acid_analysis.pl $input $output</command>
+    <inputs>
+        <param name="input" type="data" format="fasta" label="Input FASTA file" help="Input protein sequences in FASTA format"/>
+    </inputs>
+    <outputs>
+        <data name="output" format="tabular" label="Amino acid analysis"/>
+    </outputs>
+    <help>
+This tool analyzes the amino acid composition of each protein in a FASTA file.
+
+For each protein sequence, it calculates:
+- The total sequence length
+- The percentage of each amino acid
+- The count of each amino acid
+
+The output is in tab-delimited format.
+    </help>
+</tool>

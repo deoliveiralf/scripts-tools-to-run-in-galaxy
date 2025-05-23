@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<tool id="calculate_culture_medium" name="Culture Medium Calculator" version="1.0.0">
+    <description>Calculate and generate a desired quantity of culture medium solution</description>
+    <command interpreter="python">calculate_culture_medium.py '$desired_volume' '$output_txt' '$medium_type' '$num_flasks'</command>
+    <inputs>
+        <param name="medium_type" type="select" label="Culture medium type">
+            <option value="MSG">MSG (Becwar et al. 1989)</option>
+            <option value="MSGm">MSGm (Maturation)</option>
+            <option value="MSG-Liquid">MSG-Liquid (Liquid Medium)</option>
+            <option value="BM">BM (Gupta and Pullman 1991)</option>
+        </param>
+        <param name="desired_volume" type="float" label="Desired final volume of culture medium (ml)" value="1000" help="For MSG-Liquid, this will be overridden if number of flasks is specified"/>
+        <param name="num_flasks" type="integer" optional="true" label="Number of flasks (for MSG-Liquid only)" help="Each flask will contain 50ml. If specified, this will override the desired volume for MSG-Liquid medium type." />
+    </inputs>
+    <outputs>
+        <data name="output_txt" format="txt" />
+    </outputs>
+    <help>
+        This tool calculates and generates a desired quantity of specific culture medium solution by taking the stock solutions and powder reagents.
+        
+        The output includes a step-by-step protocol with:
+
+        - Calculated amounts of all reagents
+
+        - Instructions for preparation
+
+        - Checkboxes for tracking progress
+        
+        The output is generated in TXT format and includes the date and time of generation.
+
+        **Available culture medium types:**
+
+        - **MSG**: Original Becwar et al. (1989) medium
+          - Solid medium with 3 g/l gelrite
+          - Distributed in Petri dishes with 10ml each
+          - Requires L-glutamine addition after sterilization
+          
+        - **MSGm**: Modified MSG medium for maturation with additional components
+          - Contains sorbitol (30 g/l)
+          - Increased gelrite (10 g/l)
+          - Additional ABA (12 ml/l)
+          - Distributed in Petri dishes with 10ml each
+          - Requires L-glutamine and ABA addition after sterilization
+          
+        - **MSG-Liquid**: Liquid version of MSG medium
+          - No gelrite added
+          - Distributed in Erlenmeyer flasks with 50ml each
+          - L-glutamine added at 2.5ml per flask after sterilization
+          - **Note**: For MSG-Liquid, if you specify the number of flasks, the desired volume will be automatically calculated
+
+        - **BM**: Gupta and Pullman (1991) medium
+          - Contains additional hydrolyzed casein (0.5 g/l)
+          - Double microsalts concentration (20 ml/l)
+          - Double vitamins concentration (2 ml/l)
+          - Distributed in tubes with 10ml each
+          - Does not require L-glutamine addition after sterilization
+
+        Developed by Leandro F. de Oliveira (2025).
+
+        CITATIONS
+
+        Becwar MR, Noland TL, Wyckoff JL (1989) Maturation, germination, and conversion
+        of Norway spruce (Picea abies L.) somatic embryos to plants. In Vitro Cell Dev
+        Biol Plant 26:575–580. https://doi.org/10.1007/BF02623571.
+
+        Gupta PK, Pullman GS (1991) Method for reproducing coniferous plants by somatic
+        embryogenesis using abscisic acid and osmotic potential variation. US Patent
+        5,036,007.
+
+        de Oliveira, LF (2025) Tool Galaxy to calculate and generate a desired quantity
+        of culture medium solution (Galaxy Version 1.0.0).
+
+    </help>
+</tool>

@@ -1,0 +1,102 @@
+<tool id="mirna_rt_primer_generator" name="miRNA RT Primer Generator" version="1.0.0">
+    <description>Generate Universal stem-loop RT primers for miRNA (Varkonyi-Gasic et al. 2007)</description>
+    <requirements>
+        <requirement type="package" version="3.7">python</requirement>
+    </requirements>
+    <command detect_errors="exit_code"><![CDATA[
+        python '$__tool_directory__/rt_primer_generator.py'
+        --input_source '$input_source.input_source_selector'
+        #if $input_source.input_source_selector == 'file'
+            --input_file '$input_source.input_file'
+        #else
+            --input_text '$input_source.input_text'
+        #end if
+        --output '$output'
+        --details '$details'
+    ]]></command>
+    <inputs>
+        <conditional name="input_source">
+            <param name="input_source_selector" type="select" label="Input method">
+                <option value="file">From History (File)</option>
+                <option value="direct">Direct Input</option>
+            </param>
+            <when value="file">
+                <param name="input_file" type="data" format="txt" label="miRNA sequence file" 
+                       help="Input file containing miRNA sequence (FASTA format without header or plain text)"/>
+            </when>
+            <when value="direct">
+                <param name="input_text" type="text" area="true" label="miRNA sequence" 
+                       help="Paste the miRNA sequence directly"/>
+            </when>
+        </conditional>
+    </inputs>
+    <outputs>
+        <data name="output" format="txt" label="${tool.name} on ${on_string}: Primer"/>
+        <data name="details" format="txt" label="${tool.name} on ${on_string}: Details"/>
+    </outputs>
+    <tests>
+        <test>
+            <param name="input_source_selector" value="file"/>
+            <param name="input_file" value="sample_mirna.txt"/>
+            <output name="output" file="expected_primer.txt"/>
+            <output name="details" file="expected_details.txt"/>
+        </test>
+        <test>
+            <param name="input_source_selector" value="direct"/>
+            <param name="input_text" value="UGAGGUAGUAGGUUGUAUAGUU"/>
+            <output name="output" file="expected_primer_let7.txt"/>
+            <output name="details" file="expected_details_let7.txt"/>
+        </test>
+    </tests>
+    <help><![CDATA[
+.. class:: infomark
+
+**What it does**
+
+This tool generates a Universal stem-loop RT primer for miRNA reverse transcription based on the Varkonyi-Gasic et al. (2007) method.
+
+-----
+
+**Input**
+
+You can provide the miRNA sequence in two ways:
+
+1. **From History (File)**: Select a text file from your Galaxy history containing the mature miRNA sequence. The sequence should be provided as plain text or FASTA format without a header.
+
+2. **Direct Input**: Paste the miRNA sequence directly into the text area. No headers or additional formatting needed.
+
+**Output**
+
+1. A text file containing the generated Universal stem-loop RT primer
+2. A detailed text file containing information about the primer generation process, including:
+   - Input miRNA sequence
+   - Generated primer
+   - Last 6 nucleotides of the miRNA
+   - Complementary sequence added to the primer
+
+-----
+
+**How it works**
+
+1. The tool extracts the last 6 nucleotides from the miRNA sequence
+2. It generates the reverse complement of these nucleotides
+3. It adds this complementary sequence to the 3' end of the stem-loop backbone
+4. The resulting primer can be used for reverse transcription of the target miRNA
+
+.. raw:: html
+
+    <img src="static/stem_loop_rt_pcr_schematic.png" alt="Stem-loop RT-PCR miRNA assays schematic" style="width:700px;"/>
+    <p><strong>Figure 1</strong>: Schematic showing stem-loop RT-PCR miRNA assays. <strong>A.</strong> Stem-loop RT followed by end-point PCR. Stem-loop RT primers bind to the 3' portion of miRNA molecules, initiating reverse transcription of the miRNA. Then, the RT product is amplified using a miRNA specific forward primer and the universal reverse primer. <strong>B.</strong> SYBR Green I assay. <strong>C.</strong> Universal ProbeLibrary (UPL) probe assay. Highlighted in yellow is the UPL probe #21 binding site.</p>
+
+-----
+
+**Citation**
+
+If you use this tool, please cite:
+
+Varkonyi-Gasic, E., Wu, R., Wood, M., Walton, E. F., & Hellens, R. P. (2007). Protocol: a highly sensitive RT-PCR method for detection and quantification of microRNAs. Plant methods, 3(1), 12.
+    ]]></help>
+    <citations>
+        <citation type="doi">10.1186/1746-4811-3-12</citation>
+    </citations>
+</tool>

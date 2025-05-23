@@ -1,0 +1,267 @@
+<?xml version="1.0"?>
+<tool id="polyamine_calculation" name="Polyamine Concentration" version="1.2.0">
+    <description>Calculate polyamine concentrations from HPLC peak areas</description>
+    <requirements>
+        <requirement type="package" version="1.25.0">numpy</requirement>
+    </requirements>
+    <command detect_errors="aggressive"><![CDATA[
+        python '$__tool_directory__/polyamine_calculation.py'
+        
+        #if $mol_weight_source.mol_weight_option == "custom":
+            --mol_weight '$mol_weight_source.custom_mol_weight'
+        #else:
+            --preset_mol_weight
+        #end if
+        
+        #if $standard_curve_source:
+            --standard_curve '$standard_curve_source'
+        #end if
+        
+        --peak_areas '$peak_areas_source'
+        --internal_standard '$internal_standard_source'
+        --initial_fw $initial_fw
+        --volume $volume
+        --injection_volume $injection_volume
+        --std_curve_conc $std_curve_conc
+        --dilution_factor $dilution_factor
+        --output_ug '$output_ug_file'
+        --output_nmol '$output_nmol_file'
+        --output_samples_ug '$output_samples_ug_file'
+        --output_samples_nmol '$output_samples_nmol_file'
+        
+        #if $polyamine_selection.pa_option == "specific":
+            --polyamine '$polyamine_selection.specific_pa'
+        #end if
+        
+        #if $grouping.enable_grouping == "yes":
+            --group_mapping '$grouping.group_mapping'
+            #if $grouping.output_format.format_option == "both":
+                --group_output_ug '$group_statistics_ug'
+                --group_output_nmol '$group_statistics_nmol'
+                --group_samples_output_ug '$group_samples_ug'
+                --group_samples_output_nmol '$group_samples_nmol'
+            #elif $grouping.output_format.format_option == "ug":
+                --group_output_ug '$group_statistics_ug'
+                --group_samples_output_ug '$group_samples_ug'
+            #elif $grouping.output_format.format_option == "nmol":
+                --group_output_nmol '$group_statistics_nmol'
+                --group_samples_output_nmol '$group_samples_nmol'
+            #end if
+        #end if
+    ]]></command>
+    
+    <inputs>
+        <!-- Molecular Weight Source Selection -->
+        <conditional name="mol_weight_source">
+            <param name="mol_weight_option" type="select" label="Molecular Weight Source">
+                <option value="preset" selected="true">Use Preset Molecular Weights</option>
+                <option value="custom">Use Custom Molecular Weights</option>
+            </param>
+            <when value="preset">
+                <!-- No additional parameters needed when using preset values -->
+            </when>
+            <when value="custom">
+                <param name="custom_mol_weight" type="data" format="csv,tabular,txt" label="Custom Molecular Weight File"
+                       help="CSV or Tab-separated file with polyamine names in first column and molecular weights in second column"/>
+            </when>
+        </conditional>
+        
+        <param name="standard_curve_source" type="data" format="csv,tabular,txt" label="Standard Curve Source" optional="true" 
+               help="CSV or Tab-separated file containing standard curve data (polyamine names, concentrations, and peak areas) for each polyamine"/>
+        
+        <param name="peak_areas_source" type="data" format="csv,tabular,txt" label="Peak Areas Source" 
+               help="CSV or Tab-separated file containing peak areas for polyamines with first column containing sample names"/>
+        
+        <param name="internal_standard_source" type="data" format="csv,tabular,txt" label="Internal Standard Source" 
+               help="CSV or Tab-separated file containing internal standard values with first column containing sample names"/>
+        
+        <param name="initial_fw" type="float" value="1.0" label="Initial Fresh Weight (g)" 
+               help="Initial fresh weight of the sample in grams"/>
+        
+        <param name="volume" type="float" value="10000.0" label="Volume (µL)" 
+               help="Extraction volume in microliters (µL)"/>
+        
+        <param name="injection_volume" type="float" value="20.0" label="Injection Volume (µL)"
+               help="Injection volume used in the calculation (default: 20 µL)"/>
+               
+        <param name="std_curve_conc" type="float" value="40.0" label="Standard Curve Concentration (µL)"
+               help="Standard curve concentration used in the calculation (default: 40 µL)"/>
+               
+        <param name="dilution_factor" type="float" value="40.0" label="Dilution Factor"
+               help="Dilution factor used in the calculation (default: 40)"/>
+        
+        <!-- Polyamine Selection -->
+        <conditional name="polyamine_selection">
+            <param name="pa_option" type="select" label="Polyamine Selection">
+                <option value="all" selected="true">Calculate All Polyamines</option>
+                <option value="specific">Calculate Specific Polyamine</option>
+            </param>
+            <when value="all">
+                <!-- No additional parameters needed when calculating all polyamines -->
+            </when>
+            <when value="specific">
+                <param name="specific_pa" type="text" label="Specific Polyamine Name"
+                       help="Name of the specific polyamine to calculate"/>
+            </when>
+        </conditional>
+        
+        <!-- Group Statistics Options -->
+        <conditional name="grouping">
+            <param name="enable_grouping" type="select" label="Calculate Group Statistics">
+                <option value="no" selected="true">No</option>
+                <option value="yes">Yes</option>
+            </param>
+            <when value="no">
+                <!-- No additional parameters needed when not calculating group statistics -->
+            </when>
+            <when value="yes">
+                <param name="group_mapping" type="data" format="csv,tabular,txt" label="Group Mapping File"
+                       help="CSV or Tab-separated file mapping samples to groups with sample names in first column and group names in second column"/>
+                       
+                <conditional name="output_format">
+                    <param name="format_option" type="select" label="Group Output Format">
+                        <option value="both" selected="true">Both µg/g FW and nmol/g FW</option>
+                        <option value="ug">µg/g FW Only</option>
+                        <option value="nmol">nmol/g FW Only</option>
+                    </param>
+                    <when value="both">
+                        <!-- Both output formats selected, no additional parameters needed -->
+                    </when>
+                    <when value="ug">
+                        <!-- µg/g FW format selected, no additional parameters needed -->
+                    </when>
+                    <when value="nmol">
+                        <!-- nmol/g FW format selected, no additional parameters needed -->
+                    </when>
+                </conditional>
+            </when>
+        </conditional>
+    </inputs>
+    
+    <outputs>
+        <!-- Standard Outputs -->
+        <data name="output_ug_file" format="csv" label="${tool.name} on ${on_string}: µg/g FW Summary"/>
+        <data name="output_nmol_file" format="csv" label="${tool.name} on ${on_string}: nmol/g FW Summary"/>
+        <data name="output_samples_ug_file" format="csv" label="${tool.name} on ${on_string}: Sample µg/g FW Values"/>
+        <data name="output_samples_nmol_file" format="csv" label="${tool.name} on ${on_string}: Sample nmol/g FW Values"/>
+        
+        <!-- Group Statistics Outputs - conditionally generated -->
+        <data name="group_statistics_ug" format="csv" label="${tool.name} on ${on_string}: Group µg/g FW Statistics">
+            <filter>grouping['enable_grouping'] == 'yes' and (grouping['output_format']['format_option'] == 'both' or grouping['output_format']['format_option'] == 'ug')</filter>
+        </data>
+        <data name="group_statistics_nmol" format="csv" label="${tool.name} on ${on_string}: Group nmol/g FW Statistics">
+            <filter>grouping['enable_grouping'] == 'yes' and (grouping['output_format']['format_option'] == 'both' or grouping['output_format']['format_option'] == 'nmol')</filter>
+        </data>
+        <data name="group_samples_ug" format="csv" label="${tool.name} on ${on_string}: Group Sample µg/g FW Values">
+            <filter>grouping['enable_grouping'] == 'yes' and (grouping['output_format']['format_option'] == 'both' or grouping['output_format']['format_option'] == 'ug')</filter>
+        </data>
+        <data name="group_samples_nmol" format="csv" label="${tool.name} on ${on_string}: Group Sample nmol/g FW Values">
+            <filter>grouping['enable_grouping'] == 'yes' and (grouping['output_format']['format_option'] == 'both' or grouping['output_format']['format_option'] == 'nmol')</filter>
+        </data>
+    </outputs>
+    
+    <tests>
+        <test>
+            <param name="mol_weight_option" value="preset"/>
+            <param name="peak_areas_source" value="peak_areas.csv"/>
+            <param name="internal_standard_source" value="internal_standard.csv"/>
+            <param name="initial_fw" value="1.0"/>
+            <param name="volume" value="10000.0"/>
+            <param name="pa_option" value="all"/>
+            <param name="enable_grouping" value="no"/>
+            <output name="output_ug_file" file="expected_output_ug.csv"/>
+            <output name="output_nmol_file" file="expected_output_nmol.csv"/>
+        </test>
+    </tests>
+    
+    <help><![CDATA[
+.. class:: infomark
+
+**What it does**
+
+This tool calculates polyamine concentrations in both µg/g FW (fresh weight) and nmol/g FW from HPLC peak area data.
+
+-----
+
+**Input files**
+
+1. **Peak Areas Source**: CSV or Tab-separated file containing peak areas for polyamines
+   - The first column should contain sample names
+   - Each subsequent column should contain peak areas for different polyamines
+
+2. **Internal Standard Source**: CSV or Tab-separated file containing internal standard values
+   - The first column should contain sample names (matching those in the peak areas file)
+   - The second column should contain internal standard peak area values
+
+3. **Standard Curve Source (Optional)**: CSV or Tab-separated file containing standard curve data
+   - This file should contain information about the standard curve for each polyamine
+   - Format should include polyamine name, concentrations, and corresponding peak areas
+   - The tool will automatically fit a linear regression to determine slope and intercept
+
+4. **Molecular Weight Source (Optional)**: CSV or Tab-separated file with custom molecular weights
+   - The first column should contain polyamine names
+   - The second column should contain the corresponding molecular weights
+   - If not provided, preset values will be used (Putrescine: 88.15, Spermidine: 145.25, Spermine: 202.34)
+
+5. **Group Mapping File (Optional)**: CSV or Tab-separated file mapping samples to groups
+   - The first column should contain sample names (matching those in the peak areas file)
+   - The second column should contain group names
+
+-----
+
+**Parameters**
+
+- **Initial Fresh Weight (g)**: Fresh weight of the sample in grams
+- **Volume (µL)**: Extraction volume in microliters (converted to mL internally if > 100)
+- **Injection Volume (µL)**: Injection volume used in HPLC (default: 20 µL)
+- **Standard Curve Concentration (µL)**: Concentration volume for the standard curve (default: 40 µL)
+- **Dilution Factor**: Dilution factor used in the calculation (default: 40)
+
+-----
+
+**Calculation Formula**
+
+The tool uses the following formula to calculate polyamine concentrations:
+
+Polyamine Content (μg/g FW) = [(Adjusted Peak Area - Intercept) ÷ Slope] × Injection Volume × Dilution Factor × Extraction Volume (mL) × Molecular Weight (g/mol) ÷ 1000 ÷ Fresh Weight (g)
+
+Where:
+- Adjusted Peak Area = (Sample Peak Area ÷ Internal Standard Peak Area) × Reference Value
+- Reference Value is the maximum internal standard value across all samples
+- The division by 1000 converts from ng to μg
+- The division by Fresh Weight gives the concentration per gram of fresh weight
+
+nmol/g FW = (μg/g FW) × 1000 / Molecular Weight (g/mol)
+
+Standard curves are now processed using a simple linear regression approach that fits:
+- Peak areas on X-axis  
+- Concentrations on Y-axis
+
+-----
+
+**Outputs**
+
+1. **µg/g FW Summary**: Summary statistics for polyamine concentrations in µg/g FW
+2. **nmol/g FW Summary**: Summary statistics for polyamine concentrations in nmol/g FW
+3. **Sample µg/g FW Values**: Individual sample values in µg/g FW
+4. **Sample nmol/g FW Values**: Individual sample values in nmol/g FW
+5. **Group µg/g FW Statistics** (Optional): Group-level statistics in µg/g FW
+6. **Group nmol/g FW Statistics** (Optional): Group-level statistics in nmol/g FW
+7. **Group Sample µg/g FW Values** (Optional): Individual sample values by group in µg/g FW
+8. **Group Sample nmol/g FW Values** (Optional): Individual sample values by group in nmol/g FW
+
+    ]]></help>
+    
+    <citations>
+        <citation type="bibtex">
+@article{polyamine_analysis,
+  author = {Liu, J.H. and Kitashiba, H. and Wang, J. and Ban, Y. and Moriguchi, T.},
+  title = {Polyamines and their ability to provide environmental stress tolerance to plants.},
+  journal = {Plant Biotechnology},
+  volume = {24},
+  pages = {117--126},
+  year = {2007}
+}
+        </citation>
+    </citations>
+</tool>
